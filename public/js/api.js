@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = "https://appointmentbooking-zen4.onrender.com/api/v1";
 
 export function setTokens(access, refresh, userId) {
   localStorage.setItem("accessToken", access);
