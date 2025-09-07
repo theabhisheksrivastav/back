@@ -249,6 +249,18 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
 })
 
+const getMyNotifications = asyncHandler(async (req, res) => {
+  /*
+  1. Fetch notifications for the logged-in user from the database
+  2. Return the response to the user
+  */
+
+ const notifications = await NotificationService.getForUser(req.user._id)
+
+ return res.status(200).json(new apiResponse(200, notifications, 'Notifications fetched successfully'))
+
+})
+
 
 export { 
   registerUser,
@@ -258,4 +270,5 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,  
+  getMyNotifications
   }
