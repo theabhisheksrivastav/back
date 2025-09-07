@@ -12,72 +12,89 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <script type="module">
-  import { registerUser, loginUser } from "../js/userApi.js"; 
-  import showToast from "../js/toast.js";
+    import { registerUser, loginUser } from "../js/userApi.js";
+    import showToast from "../js/toast.js";
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const form = document.querySelector("form");
-    const toggleLink = document.querySelector("p a");
-    const formTitle = document.querySelector("h1");
-    const formSubtitle = document.querySelector("p.text-gray-600");
-    const submitBtn = form.querySelector("button");
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.querySelector("form");
+      const toggleLink = document.querySelector("p a");
+      const formTitle = document.querySelector("h1");
+      const formSubtitle = document.querySelector("p.text-gray-600");
+      const submitBtn = form.querySelector("button");
+      const fullNameDiv = form.querySelector("#fullname-wrapper")?.closest("div"); // get the wrapper div of fullname
 
-    let isLogin = false;
+      let isLogin = false;
 
-    // Toggle Sign Up / Login form
-    toggleLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      isLogin = !isLogin;
+      // Toggle Sign Up / Login form
+      toggleLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        isLogin = !isLogin;
 
-      if (isLogin) {
-        formTitle.textContent = "Sign in to your account";
-        formSubtitle.textContent = "Welcome back! Please login.";
-        submitBtn.textContent = "Sign in";
-        toggleLink.textContent = "Sign up";
-        toggleLink.parentNode.firstChild.textContent = "Don't have an account? ";
-      } else {
-        formTitle.textContent = "Create your account";
-        formSubtitle.textContent = "Start booking appointments seamlessly.";
-        submitBtn.textContent = "Sign up";
-        toggleLink.textContent = "Sign in";
-        toggleLink.parentNode.firstChild.textContent = "Already have an account? ";
-      }
-    });
-
-    // Handle form submission
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = form.email.value.trim();
-      const password = form.password.value.trim();
-
-      try {
         if (isLogin) {
-          const res = await loginUser({ email, password });
-          window.location.href = "/bookings";
+          // Login mode
+          formTitle.textContent = "Sign in to your account";
+          formSubtitle.textContent = "Welcome back! Please login.";
+          submitBtn.textContent = "Sign in";
+          toggleLink.textContent = "Sign up";
+          toggleLink.parentNode.firstChild.textContent = "Don't have an account? ";
+
+          // Remove fullname field
+          if (fullNameDiv && form.contains(fullNameDiv)) {
+            fullNameDiv.style.display = "none";
+            fullNameDiv.querySelector("input").required = false; // make it optional in login
+          }
         } else {
-          const res = await registerUser({ email, password });
-          showToast("Signup successful!");
+          // Signup mode
+          formTitle.textContent = "Create your account";
+          formSubtitle.textContent = "Start booking appointments seamlessly.";
+          submitBtn.textContent = "Sign up";
+          toggleLink.textContent = "Sign in";
+          toggleLink.parentNode.firstChild.textContent = "Already have an account? ";
+
+          // Show fullname field
+          if (fullNameDiv) {
+            fullNameDiv.style.display = "block";
+            fullNameDiv.querySelector("input").required = true; // make it required in signup
+          }
         }
-        form.reset();
-      } catch (err) {
-        showToast(err.message || "Something went wrong");
-      }
+      });
+
+      // Handle form submission
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = form.email.value.trim();
+        const fullname = form.fullname ? form.fullname.value.trim() : "";
+        const password = form.password.value.trim();
+
+        try {
+          if (isLogin) {
+            await loginUser({ email, password });
+            window.location.href = "/bookings";
+          } else {
+            await registerUser({ email, password, fullname });
+            showToast("Signup successful!");
+          }
+          form.reset();
+        } catch (err) {
+          showToast(err.message || "Something went wrong");
+        }
+      });
     });
-  });
-</script>
+
+  </script>
 
   <script type="module">
-    
-document.addEventListener("DOMContentLoaded", () => {
-  const accessToken = localStorage.getItem("accessToken");
-  const refreshToken = localStorage.getItem("refreshToken");
 
-  if (accessToken && refreshToken) {
-    // User already logged in, redirect to bookings page
-    window.location.href = "/bookings";
-  }
-});
-</script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      if (accessToken && refreshToken) {
+        // User already logged in, redirect to bookings page
+        window.location.href = "/bookings";
+      }
+    });
+  </script>
 
 
   <style>
@@ -107,22 +124,33 @@ document.addEventListener("DOMContentLoaded", () => {
           <p class="mt-2 text-gray-600">Start booking appointments seamlessly.</p>
         </div>
         <form class="space-y-6">
+          <div id="fullname-wrapper">
+            <label class="block text-sm font-medium text-gray-700" for="fullname">Full Name</label>
+            <div class="mt-1">
+              <input autocomplete="name"
+                class="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                id="fullname" name="fullname" placeholder="John Doe" type="text" required />
+            </div>
+          </div>
+
           <div>
             <label class="block text-sm font-medium text-gray-700" for="email">Email address</label>
             <div class="mt-1">
               <input autocomplete="email"
                 class="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                id="email" name="email" placeholder="you@example.com" required="" type="email" />
+                id="email" name="email" placeholder="you@example.com" required type="email" />
             </div>
           </div>
+
           <div>
             <label class="block text-sm font-medium text-gray-700" for="password">Password</label>
             <div class="mt-1">
               <input autocomplete="new-password"
                 class="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                id="password" name="password" placeholder="••••••••" required="" type="password" />
+                id="password" name="password" placeholder="••••••••" required type="password" />
             </div>
           </div>
+
           <div>
             <button
               class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -131,6 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </button>
           </div>
         </form>
+
         <p class="mt-8 text-center text-sm text-gray-600">
           Already have an account?
           <a class="font-medium text-blue-600 hover:text-blue-500" href="#">
