@@ -12,10 +12,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <script type="module">
-    import { registerUser, loginUser } from "../js/userApi.js"; // adjust path
-    import showToast from "../js/toast.js";
+  import { registerUser, loginUser } from "../js/userApi.js"; 
+  import showToast from "../js/toast.js";
 
-
+  document.addEventListener("DOMContentLoaded", () => {
     const form = document.querySelector("form");
     const toggleLink = document.querySelector("p a");
     const formTitle = document.querySelector("h1");
@@ -23,7 +23,6 @@
     const submitBtn = form.querySelector("button");
 
     let isLogin = false;
-
 
     // Toggle Sign Up / Login form
     toggleLink.addEventListener("click", (e) => {
@@ -35,13 +34,13 @@
         formSubtitle.textContent = "Welcome back! Please login.";
         submitBtn.textContent = "Sign in";
         toggleLink.textContent = "Sign up";
-        toggleLink.previousSibling.textContent = "Don't have an account? ";
+        toggleLink.parentNode.firstChild.textContent = "Don't have an account? ";
       } else {
         formTitle.textContent = "Create your account";
         formSubtitle.textContent = "Start booking appointments seamlessly.";
         submitBtn.textContent = "Sign up";
         toggleLink.textContent = "Sign in";
-        toggleLink.previousSibling.textContent = "Already have an account? ";
+        toggleLink.parentNode.firstChild.textContent = "Already have an account? ";
       }
     });
 
@@ -50,25 +49,23 @@
       e.preventDefault();
       const email = form.email.value.trim();
       const password = form.password.value.trim();
-      const role = form.role?.value;
 
       try {
         if (isLogin) {
           const res = await loginUser({ email, password });
           window.location.href = "/bookings";
-          console.log(res);
         } else {
           const res = await registerUser({ email, password });
           showToast("Signup successful!");
-          console.log(res);
         }
         form.reset();
       } catch (err) {
         showToast(err.message || "Something went wrong");
-        console.error(err);
       }
     });
-  </script>
+  });
+</script>
+
   <script type="module">
     
 document.addEventListener("DOMContentLoaded", () => {
