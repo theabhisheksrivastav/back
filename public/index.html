@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>QuickBook</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link rel="stylesheet" href="../css/style.css">
+
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script type="module">
+  import { registerUser, loginUser } from "../js/userApi.js"; 
+  import showToast from "../js/toast.js";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector("form");
+    const toggleLink = document.querySelector("p a");
+    const formTitle = document.querySelector("h1");
+    const formSubtitle = document.querySelector("p.text-gray-600");
+    const submitBtn = form.querySelector("button");
+
+    let isLogin = false;
+
+    // Toggle Sign Up / Login form
+    toggleLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      isLogin = !isLogin;
+
+      if (isLogin) {
+        formTitle.textContent = "Sign in to your account";
+        formSubtitle.textContent = "Welcome back! Please login.";
+        submitBtn.textContent = "Sign in";
+        toggleLink.textContent = "Sign up";
+        toggleLink.parentNode.firstChild.textContent = "Don't have an account? ";
+      } else {
+        formTitle.textContent = "Create your account";
+        formSubtitle.textContent = "Start booking appointments seamlessly.";
+        submitBtn.textContent = "Sign up";
+        toggleLink.textContent = "Sign in";
+        toggleLink.parentNode.firstChild.textContent = "Already have an account? ";
+      }
+    });
+
+    // Handle form submission
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = form.email.value.trim();
+      const password = form.password.value.trim();
+
+      try {
+        if (isLogin) {
+          const res = await loginUser({ email, password });
+          window.location.href = "/bookings";
+        } else {
+          const res = await registerUser({ email, password });
+          showToast("Signup successful!");
+        }
+        form.reset();
+      } catch (err) {
+        showToast(err.message || "Something went wrong");
+      }
+    });
+  });
+</script>
+
+  <script type="module">
+    
+document.addEventListener("DOMContentLoaded", () => {
+  const accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
+
+  if (accessToken && refreshToken) {
+    // User already logged in, redirect to bookings page
+    window.location.href = "/bookings";
+  }
+});
+</script>
+
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-white">
+  <div class="flex min-h-screen">
+    <!-- Toast container -->
+    <div id="toast-container" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 space-y-2 z-50"></div>
+
+
+    <div class="hidden lg:flex lg:w-1/2 items-center justify-center bg-gray-50 p-12">
+      <div class="w-full max-w-md">
+        <img alt="People scheduling appointments on a large calendar interface"
+          class="w-full h-auto rounded-2xl shadow-2xl"
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsEUsqqPm9QTz4k3e_v7AGq51m9aH-lYeMgJ0S0XnWeF9b2ifusVDPFw-1gQ-jgvfPfQ2ocTKi3FtEer-z5p5sADbXm2VW5b0HterSFbRZSsiXofpERYf9sU0offOoTsiGU1V7ruLMT4cFBq62s76bvQ57vqLDfceDc8PH8-iW8yj5jDHzim0AEuXVM6MWxNiCWJq_Z-4JXf22n294246kbtEWCahxPs_B_vfGEuo0dp7ONLeO198PmVlv8Dc4TPA-rUZrWEXn5JUM" />
+      </div>
+    </div>
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+      <div class="w-full max-w-md">
+        <div class="text-center mb-10">
+          <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Create your account</h1>
+          <p class="mt-2 text-gray-600">Start booking appointments seamlessly.</p>
+        </div>
+        <form class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700" for="email">Email address</label>
+            <div class="mt-1">
+              <input autocomplete="email"
+                class="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                id="email" name="email" placeholder="you@example.com" required="" type="email" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700" for="password">Password</label>
+            <div class="mt-1">
+              <input autocomplete="new-password"
+                class="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                id="password" name="password" placeholder="••••••••" required="" type="password" />
+            </div>
+          </div>
+          <div>
+            <button
+              class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              type="submit">
+              Sign up
+            </button>
+          </div>
+        </form>
+        <p class="mt-8 text-center text-sm text-gray-600">
+          Already have an account?
+          <a class="font-medium text-blue-600 hover:text-blue-500" href="#">
+            Sign in
+          </a>
+        </p>
+        <p class="mt-10 text-center text-xs text-gray-500">
+          Copyright © 2024 QuickBook. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

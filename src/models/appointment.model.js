@@ -1,51 +1,17 @@
-import mongoose, {Schema} from "mongoose"
+import mongoose, { Schema } from "mongoose";
 
-const appointmentSchema = new Schema ({
-    business: {
-        type: Schema.Types.ObjectId,
-        ref: 'Business',
-        required: true,
-        index: true
-    },
-    customerName: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    customerEmail: {
-        type: String,
-        required: false,
-        trim: true,
-    },
-    customerPhone: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    service: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    appointmentDate: {
-        type: Date,
-        required: true,
-        index: true
-    },
-    appointmentTime: {
-        type: String,
-        required: true,
-        trim: true,
-        index: true
-    },
-    status: {
-        type: String,
-        enum: ['scheduled', 'completed', 'canceled'],
-        default: 'scheduled',
-        index: true
-    }
-},{
-    timestamps: true
-})
 
-export const Appointment = mongoose.model('Appointment', appointmentSchema);
+const AppointmentSchema = new Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    customerName: { type: String, required: true },
+    customerEmail: { type: String },
+    customerPhone: { type: String, required: true },
+    appointmentDate: { type: Date, required: true },
+    slotTime: { 
+    type: String, 
+    required: true 
+  },
+    status: { type: String, enum: ["scheduled", "completed", "canceled", "rescheduled"], default: "scheduled" }
+}, { timestamps: true });
+
+export const Appointment = mongoose.model("Appointment", AppointmentSchema);

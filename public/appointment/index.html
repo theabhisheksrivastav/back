@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>QuickBook - Schedule Meeting</title>
+  <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon" />
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link rel="stylesheet" href="../css/style.css">
+
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;500;700&amp;display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <script type="module">
+    import { createAppointment } from "../js/appointmentApi.js";
+    import { getUserById } from "../js/userApi.js";
+    import showToast from "../js/toast.js";
+
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get("user");
+
+    const today = new Date();
+    document.getElementById("selected-date").textContent = today.toDateString();
+    
+    const userNameEl = document.getElementById("user-name");
+    const timeSlotsContainer = document.querySelector(".time-slots");
+    const bookingModal = document.getElementById("booking-modal");
+    const modalText = document.getElementById("modal-text");
+    let selectedTime = null;
+    let selectedUserName = "the user";
+    let selectedDate = today.toDateString(); // Track selected date
+
+    // Fetch user details
+    if (userId) {
+      const userRes = await getUserById(userId); // API response
+      if (userRes && userRes.message && userRes.message.fullname) {
+        selectedUserName = userRes.message.fullname;
+        userNameEl.textContent = selectedUserName;
+      }
+    }
+
+    // Generate time slots 9:00 AM - 5:00 PM every 30 min
+    for (let h = 9; h <= 16; h++) {
+      ["00", "30"].forEach(m => {
+        const hour = h % 12 === 0 ? 12 : h % 12;
+        const period = h < 12 ? "AM" : "PM";
+        const time = `${hour}:${m} ${period}`;
+        const label = document.createElement("label");
+        label.className = "group relative";
+        label.innerHTML = `
+      <input type="radio" name="time-slot" value="${time}" class="peer sr-only">
+      <div class="cursor-pointer rounded-xl border border-gray-300 bg-white px-4 py-3 text-center text-sm font-medium text-gray-700
+      ring-2 ring-transparent transition-all hover:bg-gray-50
+      peer-checked:border-blue-600 peer-checked:bg-blue-50 peer-checked:text-blue-600 peer-checked:ring-blue-500">
+        ${time}
+      </div>
+    `;
+        timeSlotsContainer.appendChild(label);
+      });
+    }
+
+    // Open modal on slot select
+    timeSlotsContainer.addEventListener("change", e => {
+      if (e.target.name === "time-slot") {
+        selectedTime = e.target.value;
+        modalText.textContent = `You're booking a meeting with ${selectedUserName} for ${selectedTime} on ${selectedDate}.`;
+        bookingModal.style.display = "flex";
+      }
+    });
+
+    // Confirm booking
+    bookingModal.querySelector("form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const name = e.target.name.value.trim();
+      const email = e.target.email.value.trim();
+      const phone = e.target.number.value.trim();
+      const appointmentDate = selectedDate; // Use selectedDate variable
+      if (!name || !email || !phone || !selectedTime) return;
+      try {
+        const res = await createAppointment({
+          customerName: name,
+          customerEmail: email,
+          customerPhone: phone,
+          service: "meeting",
+          appointmentDate: appointmentDate,
+          slotTime: selectedTime,
+          user: userId
+        });
+        if (!res || !res.success) showToast(res.message || "Failed to create appointment");
+        showToast("Appointment booked successfully!");
+        bookingModal.style.display = "none";
+        window.location.href = `/booked?appointment=${res.message._id}`;
+      } catch (err) {
+        showToast(err.message || "Failed to create appointment");
+      }
+      });
+
+    let currentDate = new Date();
+
+const calendarMonthEl = document.getElementById("calendar-month");
+const calendarDaysEl = document.getElementById("calendar-days");
+const prevMonthBtn = document.getElementById("prev-month");
+const nextMonthBtn = document.getElementById("next-month");
+
+function renderCalendar(date){
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  
+  // Update month/year display
+  calendarMonthEl.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+  
+  // Clear previous day buttons
+  calendarDaysEl.querySelectorAll(".day-btn").forEach(d => d.remove());
+  
+  const firstDay = new Date(year, month, 1).getDay(); // 0-Sun, 6-Sat
+  const lastDate = new Date(year, month+1, 0).getDate(); // Last day of month
+  
+  // Add empty divs for days before first day
+  for(let i=0; i<firstDay; i++){
+    const emptyDiv = document.createElement("div");
+    calendarDaysEl.appendChild(emptyDiv);
+  }
+  
+  // Generate days
+  for(let d=1; d<=lastDate; d++){
+    const dayBtn = document.createElement("button");
+    dayBtn.textContent = d;
+    dayBtn.className = "day-btn flex h-10 w-10 items-center justify-center rounded-xl text-sm hover:bg-gray-100";
+    
+    const today = new Date();
+    if(d === today.getDate() && month === today.getMonth() && year === today.getFullYear()){
+      dayBtn.classList.add("bg-blue-600", "text-white", "font-semibold");
+    }
+    dayBtn.addEventListener("click", () => {
+      selectedDate = new Date(year, month, d).toDateString(); // Update selectedDate variable
+      document.getElementById("selected-date").textContent = selectedDate;
+    });
+    
+    calendarDaysEl.appendChild(dayBtn);
+  }
+}
+
+// Initial render
+renderCalendar(currentDate);
+
+// Month navigation
+prevMonthBtn.addEventListener("click", () => {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar(currentDate);
+});
+
+nextMonthBtn.addEventListener("click", () => {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar(currentDate);
+});
+document.getElementById("logo").addEventListener("click", () => {
+    window.location.href = "/"; // redirects to homepage
+});
+  </script>
+
+
+  <style type="text/tailwindcss">
+    :root {
+        --brand-blue: #2563eb;
+      }
+      body {
+        font-family: 'Spline Sans', sans-serif;
+      }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+  <!-- Toast container -->
+   <div id="toast-container" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 space-y-2 z-50"></div>
+  <div class="relative flex size-full min-h-screen flex-col" x-data="{ showModal: false }">
+    <header class="sticky top-0 z-20 w-full bg-white/80 backdrop-blur-lg">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between border-b border-gray-200 py-4">
+          <div class="flex items-center gap-3">
+            <svg id="logo" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 48 48"
+              xmlns="http://www.w3.org/2000/svg">
+              <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+            </svg>
+            <h1 class="text-xl font-bold tracking-tight">QuickBook</h1>
+          </div>
+    </header>
+    <main class="flex-grow">
+      <div class="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-4xl">
+          <div class="mb-8 text-center">
+            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Schedule a meeting with <span id="user-name">User</span>
+            </h2>
+            <p class="mt-2 text-lg text-gray-600">Find a time that works for both of you.</p>
+          </div>
+
+          <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div class="flex items-center justify-between">
+                <button id="prev-month" class="rounded-full p-2 hover:bg-gray-100">
+                  <svg class="h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 256 256">
+                    <path
+                      d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z">
+                    </path>
+                  </svg>
+                </button>
+                <p class="text-lg font-semibold" id="calendar-month">October 2024</p>
+                <button id="next-month" class="rounded-full p-2 hover:bg-gray-100">
+                  <svg class="h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 256 256">
+                    <path
+                      d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z">
+                    </path>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="mt-4 grid grid-cols-7 gap-1 text-center" id="calendar-days">
+                <p class="text-xs font-bold uppercase text-gray-500">S</p>
+                <p class="text-xs font-bold uppercase text-gray-500">M</p>
+                <p class="text-xs font-bold uppercase text-gray-500">T</p>
+                <p class="text-xs font-bold uppercase text-gray-500">W</p>
+                <p class="text-xs font-bold uppercase text-gray-500">T</p>
+                <p class="text-xs font-bold uppercase text-gray-500">F</p>
+                <p class="text-xs font-bold uppercase text-gray-500">S</p>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h3 class="text-lg font-semibold">
+                Available times for <span class="text-blue-600" id="selected-date">Loading...</span>
+              </h3>
+
+              <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 time-slots">
+                <!-- Time slots will be dynamically generated via JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booking modal (hidden by default) -->
+      <div id="booking-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+          <h2 class="text-xl font-semibold mb-4">Confirm Booking</h2>
+          <p id="modal-text" class="mb-4"></p>
+          <form>
+            <input type="text" name="name" placeholder="Your Name" class="w-full mb-2 px-3 py-2 border rounded"
+              required>
+            <input type="number" name="number" placeholder="Your Phone Number"
+              class="w-full mb-4 px-3 py-2 border rounded" required>
+            <input type="email" name="email" placeholder="Your Email" class="w-full mb-4 px-3 py-2 border rounded"
+              required>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">Confirm</button>
+          </form>
+          <button onclick="document.getElementById('booking-modal').style.display='none'"
+            class="mt-2 w-full py-2 rounded border">Cancel</button>
+        </div>
+      </div>
+    </main>
+    <div class="fixed inset-0 z-30 flex items-center justify-center bg-black/50" style="display: none;"
+      x-show="showModal" x-transition:enter="ease-out duration-300" x-transition:enter-end="opacity-100"
+      x-transition:enter-start="opacity-0" x-transition:leave="ease-in duration-200" x-transition:leave-end="opacity-0"
+      x-transition:leave-start="opacity-100">
+      <div @click.away="showModal = false" class="w-full max-w-md rounded-xl bg-white p-8 shadow-2xl" x-show="showModal"
+        x-transition:enter="ease-out duration-300" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100">
+        <div class="text-center">
+          <h3 class="text-2xl font-bold text-gray-900">Confirm your booking</h3>
+          <p id=modal-text" class="mt-2 text-sm text-gray-500">You're booking a meeting with Sarah for 9:00 AM on
+            October 5, 2024.</p>
+        </div>
+        <form class="mt-8 space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700" for="name">Full Name</label>
+            <div class="mt-1">
+              <input autocomplete="name"
+                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                id="name" name="name" required="" type="text" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700" for="email">Email Address</label>
+            <div class="mt-1">
+              <input autocomplete="email"
+                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                id="email" name="email" required="" type="email" />
+            </div>
+          </div>
+          <div class="flex items-center justify-end gap-4 pt-4">
+            <button @click="showModal = false"
+              class="rounded-xl px-6 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+              type="button">Cancel</button>
+            <button
+              class="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              type="submit">Confirm</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script defer="" src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"></script>
+
+</body>
+
+</html>
