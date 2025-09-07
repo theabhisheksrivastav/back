@@ -7,8 +7,11 @@ const AppointmentSchema = new Schema({
     customerEmail: { type: String },
     customerPhone: { type: String, required: true },
     appointmentDate: { type: Date, required: true },
-    slotTime: { type: String, required: true }, // e.g., "09:00", "10:00" will enforce in controller
-    status: { type: String, enum: ["scheduled", "completed", "canceled"], default: "scheduled" }
+    slotTime: { 
+    type: String, 
+    required: true 
+  },
+    status: { type: String, enum: ["scheduled", "completed", "canceled", "rescheduled"], default: "scheduled" }
 }, { timestamps: true });
 
 export const Appointment = mongoose.model("Appointment", AppointmentSchema);

@@ -1,4 +1,4 @@
-import { Notification } from "../models/notification.js";
+import { Notification } from "../models/notification.model.js";
 
 class NotificationService {
     /**
@@ -27,7 +27,10 @@ class NotificationService {
         return Notification.find({ reciever: userId }).sort({ scheduledTime: -1 });
     }
 
+    static async deleteAllNotification(receiverId) {
+        return Notification.deleteMany({ reciever: receiverId });
+    }
     
 }
 
-export default NotificationService;
+export  {NotificationService};

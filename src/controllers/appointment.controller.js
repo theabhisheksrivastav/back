@@ -2,7 +2,7 @@ import { asyncHandler } from '../utils/asyncHandler.js'
 import { apiError } from '../utils/apiError.js'
 import { Appointment } from '../models/appointment.model.js'
 import { apiResponse } from '../utils/apiResponse.js'
-import NotificationService from '../services/notification.service.js'
+import {NotificationService} from '../services/notification.service.js'
 
 
 const getMyAppointments = asyncHandler(async (req, res) => {
@@ -26,7 +26,9 @@ const createAppointment = asyncHandler(async (req, res) => {
     });
 
     if (existingAppointment) {
-        throw new apiError(400, 'Slot already booked for this time');
+        return res
+        .status(409)
+        .json(new apiResponse(409, 'Slot already booked for this time'));
     }
 
     const appointment = await Appointment.create({
@@ -50,52 +52,76 @@ const createAppointment = asyncHandler(async (req, res) => {
         .json(new apiResponse(201, appointment, 'Appointment created successfully'));
 });
 
-const updateAppointmentStatus = asyncHandler(async (req, res) => {
-    const { status, slotTime } = req.body;
+const updateAppointment = asyncHandler(async (req, res) => {
+  const { status, appointmentDate, slotTime } = req.body.data;
+  const { id } = req.params;
+  console.log (req.body)
 
-    if (status && !['scheduled', 'completed', 'canceled'].includes(status)) {
-        throw new apiError(400, 'Invalid status value');
+  console.log (status, slotTime, appointmentDate, id)
+
+  // Validate status upfront
+  if (status && !['scheduled', 'completed', 'canceled', 'rescheduled'].includes(status)) {
+    throw new apiError(400, 'Invalid status value');
+  }
+
+  // Prepare date
+  const newDate = appointmentDate ? new Date(appointmentDate) : null;
+  let startOfDay, endOfDay;
+  if (newDate) {
+    startOfDay = new Date(newDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    endOfDay = new Date(newDate);
+    endOfDay.setHours(23, 59, 59, 999);
+  }
+
+  // Check for conflicts first
+  if (slotTime && newDate) {
+    const conflict = await Appointment.findOne({
+      slotTime,
+      appointmentDate: { $gte: startOfDay, $lte: endOfDay }
+    });
+
+    if (conflict && conflict._id.toString() !== id) {
+      return res.status(400).json({ success: false, message: 'New slot is already booked' });
     }
+  }
 
-    const appointment = await Appointment.findById(req.params.id).populate("user");
+  // Check if appointment belongs to current user
+  const appointment = await Appointment.findById(id);
+  if (!appointment) {
+    return res.status(404).json({ success: false, message: "Appointment not found" });
+  }
+  if (appointment.user.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
 
-    if (!appointment) {
-        return res.status(404).json({ success: false, message: "Appointment not found" });
-    }
+  // Build update object
+  const updateData = {};
+    updateData.status = status;
+    updateData.slotTime = slotTime;
+    updateData.appointmentDate = newDate;
 
-    // Check ownership: only the user who owns this appointment can update it
-    if (appointment.user._id.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ success: false, message: "Unauthorized" });
-    }
+  console.log(id, updateData)
+  // Update using $set
+  const updatedAppointment = await Appointment.findByIdAndUpdate(
+    id,
+    { $set: updateData },
+    { new: true }
+  ).populate('user', '_id fullname email');
 
-    // Update status and slot time if provided
-    if (status) appointment.status = status;
-    if (slotTime) {
-        // Ensure new slot is not already booked
-        const conflict = await Appointment.findOne({
-            user: req.user._id,
-            appointmentDate: appointment.appointmentDate,
-            slotTime
-        });
-        if (conflict && conflict._id.toString() !== appointment._id.toString()) {
-            throw new apiError(400, 'New slot is already booked');
-        }
-        appointment.slotTime = slotTime;
-    }
-
-    await appointment.save();
-
-    return res
-        .status(200)
-        .json(new apiResponse(200, appointment, 'Appointment updated successfully'));
+  return res.status(200).json({
+    success: true,
+    message: 'Appointment updated successfully',
+    data: updatedAppointment
+  });
 });
-
 
 const getAppointmentsForUser = asyncHandler(async (req, res) => {
     const { appointmentId } = req.params;
+    console.log(appointmentId)
 
    
-    const appointments = await Appointment.findById({appointmentId})
+    const appointments = await Appointment.findById(appointmentId)
         .sort({ appointmentDate: 1, slotTime: 1 })
         .select("customerName appointmentDate slotTime status service")
         .populate("user", "fullname email phone");
@@ -105,5 +131,18 @@ const getAppointmentsForUser = asyncHandler(async (req, res) => {
         .json(new apiResponse(200, appointments, 'Appointments fetched successfully'));
 });
 
+const deleteAppointment = asyncHandler(async (req, res) => {
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+        return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
+    // Check ownership: only the user who owns this appointment can delete it
+    if (appointment.user.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+    await appointment.deleteOne();
+    return res.status(200).json(new apiResponse(200, {}, 'Appointment deleted successfully'));
+});
 
-export { getMyAppointments, createAppointment, updateAppointmentStatus, getAppointmentsForUser }
+
+export { getMyAppointments, createAppointment, updateAppointment, getAppointmentsForUser, deleteAppointment }

@@ -3,7 +3,7 @@ import {apiError} from '../utils/apiError.js'
 import {User} from '../models/user.model.js' 
 import {apiResponse} from '../utils/apiResponse.js'
 import jwt from 'jsonwebtoken'
-import { NotificationService } from '../services/notification.service.js'
+import  {NotificationService}  from '../services/notification.service.js'
 
 
 const generateAccessAndRefreshToken = async (userId) => 
@@ -49,7 +49,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
    if (existedUser) {
     // res.status(400)
-    throw new apiError(409, 'User already exists')
+    return res
+    .status(409)
+    .json(new apiResponse(409, 'User already exists'))
    }
 
   // const passwordHash = await bcrypt.hash(password, 10)
@@ -262,6 +264,28 @@ const getMyNotifications = asyncHandler(async (req, res) => {
 
 })
 
+const getUserById = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id).select('-password -refreshToken')
+
+  if (!user) {
+    throw new apiError(404, 'User not found')
+  }
+
+  return res.status(200).json(new apiResponse(200, user, 'User fetched successfully'))
+})
+
+const deleteMyNotifications = asyncHandler(async (req, res) => {
+  /*
+  1. Delete all notifications for the logged-in user from the database
+  2. Return the response to the user
+  */
+
+ await NotificationService.deleteAllNotification(req.user._id)
+
+ return res.status(200).json(new apiResponse(200, {}, 'Notifications deleted successfully'))
+ 
+})
+
 
 export { 
   registerUser,
@@ -271,5 +295,7 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,  
-  getMyNotifications
+  getMyNotifications,
+  getUserById,
+  deleteMyNotifications
   }
