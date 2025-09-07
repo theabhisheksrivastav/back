@@ -21,7 +21,6 @@ const createAppointment = asyncHandler(async (req, res) => {
 
     // Check if slot already booked
     const existingAppointment = await Appointment.findOne({
-        user,
         appointmentDate,
         slotTime
     });
