@@ -7,24 +7,16 @@ const notificationSchema = new Schema({
         required: true,
         index: true
     },
-    type: {
-        type: String,
-        enum: ["email", "sms", "whatsapp"],
-        required: true
+    reciever: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+        index: true
     },
     message: {
         type: String,
         required: true
     },
-    status: {
-        type: String,
-        enum: ["pending", "sent", "failed"],
-        default: "pending"
-    },
-    scheduledTime: {
-        type: Date,
-        required: true
-    }
 }, {
     timestamps: true
 });

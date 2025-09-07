@@ -1,20 +1,20 @@
 import { Router } from "express";
 import { 
-    getAppointments,
-    getAppointmentsForCustomers,
+    getMyAppointments,
+    getAppointmentsForUser,
     createAppointment,
-    updateAppointmentStatus
+    updateAppointment,
+    deleteAppointment
 } from "../controllers/appointment.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Secured Routes for business owners
-router.route("/business/:businessId").get(verifyJWT, getAppointments);
-router.route("/:id/status").patch(verifyJWT, updateAppointmentStatus);
-
-// Public Routes for customers
-router.route("/customer/:businessId").get(getAppointmentsForCustomers);
+router.route("/my-appointments").get(verifyJWT, getMyAppointments);
+router.route("/public/:appointmentId").get(getAppointmentsForUser);
+router.route("/:id/update").patch(verifyJWT, updateAppointment);
 router.route("/").post(createAppointment);
+router.route("/:id").delete(verifyJWT, deleteAppointment);
+
 
 export default router;
