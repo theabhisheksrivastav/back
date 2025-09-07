@@ -1,0 +1,118 @@
+{
+  "info": {
+    "name": "Appointment SaaS API",
+    "_postman_id": "12345678-abcd-efgh-ijkl-1234567890ab",
+    "description": "Postman Collection for Appointment SaaS MVP",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"9876543210\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Business",
+      "item": [
+        {
+          "name": "Create Business",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Salon\",\n  \"address\": \"123 Main Street\",\n  \"category\": \"Salon\",\n  \"phone\": \"9876543210\",\n  \"email\": \"salon@example.com\",\n  \"slots\": [\n    {\"day\": \"Monday\", \"startTime\": \"10:00\", \"endTime\": \"18:00\"}\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/business", "host": ["{{base_url}}"], "path": ["business"] }
+          }
+        },
+        {
+          "name": "Get Businesses",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/business", "host": ["{{base_url}}"], "path": ["business"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "Create Appointment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"business\": \"<business_id>\",\n  \"customerName\": \"Alice\",\n  \"customerEmail\": \"alice@example.com\",\n  \"customerPhone\": \"9876543210\",\n  \"service\": \"Haircut\",\n  \"appointmentDate\": \"2025-09-08\",\n  \"appointmentTime\": \"14:00\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/appointment", "host": ["{{base_url}}"], "path": ["appointment"] }
+          }
+        },
+        {
+          "name": "Get Appointments (Owner)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/appointment/business/<business_id>", "host": ["{{base_url}}"], "path": ["appointment", "business", "<business_id>"] }
+          }
+        },
+        {
+          "name": "Get Appointments (Customer)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/appointment/customer/<business_id>", "host": ["{{base_url}}"], "path": ["appointment", "customer", "<business_id>"] }
+          }
+        },
+        {
+          "name": "Update Appointment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/appointment/<appointment_id>/status", "host": ["{{base_url}}"], "path": ["appointment", "<appointment_id>", "status"] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
+    { "key": "token", "value": "" }
+  ]
+}
